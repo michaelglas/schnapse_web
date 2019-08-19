@@ -20,3 +20,6 @@ schnapsen_server: ../schnapsen_server.c
 	gcc -O0 -g3 -Wall -Wextra -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
+
+clean:
+	rm -rf schnapsen_server schnapsen_client schnapsen_fds
