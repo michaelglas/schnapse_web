@@ -72,7 +72,7 @@ struct card{
 
 #define trumpf stack[0]
 
-#define PRINT_PROMPT \
+#define PRINT_PROMPT PRINT_PLAYER(abs_player,"player %lu",abs_player+1);\
 	PRINT_PLAYER(abs_player,"hand ");\
 	PRINT_PLAYER(abs_player,"%c%c",colors[hand[abs_player][0].color],cards[hand[abs_player][0].card]);\
 	for(unsigned int k=1;k<hand_length;++k){\
@@ -85,7 +85,8 @@ struct card{
 	if(rel_player){\
 		PRINT_PLAYER(abs_player,";stich %c%c",colors[stich[0]->color],cards[stich[0]->card]);\
 	}\
-	PRINT_PLAYER(abs_player,"> ")
+	PRINT_PLAYER(abs_player,"> ");\
+	fflush(streams[abs_player])
 
 void shuffle_cards(struct card* restrict x,size_t length,FILE* restrict random_stream){
 	for(size_t i=length-1;i>1;--i){
@@ -134,6 +135,7 @@ int main(int argc, char **argv) {
 		struct card* stich[2];
 		for(size_t rel_player=0;rel_player<2;++rel_player){
 			size_t abs_player = players[rel_player];
+			size_t other_player = !players[rel_player];
 			struct card* selection;
 			char* string;
 			ssize_t length;
@@ -143,8 +145,8 @@ int main(int argc, char **argv) {
 			int repeat;
 			do {
 				repeat=0;
-				string  = malloc(4);
-				length  = 4;
+				string  = malloc(8);
+				length  = 8;
 				special = 0;
 				PRINT_PROMPT;
 				plus_20_40=0;
@@ -159,8 +161,8 @@ int main(int argc, char **argv) {
 				}
 				while(length!=2||!(in_n(*string,numbers,hand_length)||(!rel_player&&(special=in(*string,specialchars))))){
 					free(string);
-					string = malloc(4);
-					length = 4;
+					string = malloc(8);
+					length = 8;
 					PRINT_PROMPT;
 					length = getline(&string, (size_t*)&length, streams[abs_player]);
 					if(length<0){
@@ -211,9 +213,10 @@ int main(int argc, char **argv) {
 						if(num_pairs){
 							struct card** pair;
 							if(num_pairs>1){
-								string = malloc(4);
-								length = 4;
-								PRINT_PLAYER(abs_player,"trumpf %c%c;pair1 %c;pair2 %c> ",colors[trumpf.color],cards[trumpf.card],colors[pairs[0][0]->color],colors[pairs[1][0]->color]);
+								string = malloc(8);
+								length = 8;
+								PRINT_PLAYER(abs_player,"player %zu;trumpf %c%c;pair1 %c;pair2 %c> ",abs_player+1,colors[trumpf.color],cards[trumpf.card],colors[pairs[0][0]->color],colors[pairs[1][0]->color]);
+								fflush(streams[abs_player]);
 								length = getline(&string, (size_t*)&length, streams[abs_player]);
 								if(length<0){
 									if(errno){
@@ -225,9 +228,10 @@ int main(int argc, char **argv) {
 								}
 								while(length!=2||!in(*string,"12")){
 									free(string);
-									string = malloc(4);
-									length = 4;
-									PRINT_PLAYER(abs_player,"player %lu;trumpf %c%c;pair1 %c;pair2 %c> ",abs_player+1,colors[trumpf.color],cards[trumpf.card],colors[pairs[0][0]->color],colors[pairs[1][0]->color]);
+									string = malloc(8);
+									length = 8;
+									PRINT_PLAYER(abs_player,"player %zu;trumpf %c%c;pair1 %c;pair2 %c> ",abs_player+1,colors[trumpf.color],cards[trumpf.card],colors[pairs[0][0]->color],colors[pairs[1][0]->color]);
+									fflush(streams[abs_player]);
 									length = getline(&string, (size_t*)&length, streams[abs_player]);
 									if(length<0){
 										if(errno){
@@ -248,9 +252,10 @@ int main(int argc, char **argv) {
 							} else {
 								plus_20_40=1;
 							}
-							string = malloc(4);
-							length = 4;
-							PRINT_PLAYER(abs_player,"player %lu;card1 %c;card2 %c> ",abs_player+1,cards[pair[0]->card],cards[pair[1]->card]);
+							string = malloc(8);
+							length = 8;
+							PRINT_PLAYER(abs_player,"player %zu;card1 %c;card2 %c> ",abs_player+1,cards[pair[0]->card],cards[pair[1]->card]);
+							fflush(streams[abs_player]);
 							length = getline(&string, (size_t*)&length, streams[abs_player]);
 							if(length<0){
 								if(errno){
@@ -262,9 +267,10 @@ int main(int argc, char **argv) {
 							}
 							while(length!=2||!in(*string,"12")){
 								free(string);
-								string = malloc(4);
-								length = 4;
-								PRINT_PLAYER(abs_player,"player %lu;card1 %c;card2 %c> ",abs_player+1,cards[pair[0]->card],cards[pair[1]->card]);
+								string = malloc(8);
+								length = 8;
+								PRINT_PLAYER(abs_player,"player %zu;card1 %c;card2 %c> ",abs_player+1,cards[pair[0]->card],cards[pair[1]->card]);
+								fflush(streams[abs_player]);
 								length = getline(&string, (size_t*)&length, streams[abs_player]);
 								if(length<0){
 									if(errno){
@@ -280,6 +286,7 @@ int main(int argc, char **argv) {
 						} else {
 							repeat=1;
 							PRINT_PLAYER(abs_player,"invalid no pairs\n");
+							fflush(streams[abs_player]);
 						}
 					} else {
 						if(end-stack>2){
@@ -287,9 +294,12 @@ int main(int argc, char **argv) {
 							case'c':
 								free(string);
 								if(!closed){
+									PRINT_PLAYER(other_player,"player %zu closed",other_player);
+									fflush(streams[abs_player]);
 									closed=1;
 								} else {
 									PRINT_PLAYER(abs_player,"invalid already closed\n");
+									fflush(streams[abs_player]);
 								}
 								repeat=1;
 								break;
@@ -297,6 +307,8 @@ int main(int argc, char **argv) {
 								free(string);
 								for(struct card* i=hand[abs_player];i<hand[abs_player]+hand_length;++i){
 									if(i->card==0&&i->color==trumpf.color){
+										PRINT_PLAYER(other_player,"player %zu swaped %c",other_player,cards[selection->card]);
+										fflush(streams[abs_player]);
 										struct card temp = trumpf;
 										trumpf = *i;
 										*i = temp;
@@ -304,6 +316,7 @@ int main(int argc, char **argv) {
 									}
 								}
 								PRINT_PLAYER(abs_player,"invalid no <placeholder>\n");
+								fflush(streams[abs_player]);
 								END1:
 								repeat=1;
 								break;
@@ -357,6 +370,8 @@ int main(int argc, char **argv) {
 				}
 			} while(repeat);
 			if(plus_20_40){
+				PRINT_PLAYER(other_player,"player %zu showed %c",other_player,colors[selection->color]);
+				fflush(streams[abs_player]);
 				switch(plus_20_40){
 				case 1:
 					points[abs_player]+=20;
@@ -370,6 +385,8 @@ int main(int argc, char **argv) {
 					goto END_OF_GAME;
 				};
 			}
+			PRINT_PLAYER(other_player,"player %zu played %c%c",other_player,colors[selection->color],cards[selection->card]);
+			fflush(streams[abs_player]);
 			stich[rel_player]=selection;
 		}
 		if(stich[0]->color==stich[1]->color){

@@ -14,7 +14,7 @@
 #include<stdio.h>
 #include<poll.h>
 
-#define READ_SIZE 32
+#define READ_SIZE 64
 
 
 int pass(int fd1,int fd2){
