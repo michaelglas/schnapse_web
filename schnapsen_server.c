@@ -14,8 +14,14 @@
 #include<stdlib.h>
 #include<signal.h>
 #include<string.h>
+#include<limits.h>
+
+#ifndef PORT
+#define PORT 8011
+#endif
 
 #define MAX_QUEUE_LENGTH 10
+#define INT_DEC_WIDTH (CHAR_BIT * sizeof(int) - 1) / 3 + 2
 
 const char* sdefault(const char* a,const char* d){
 	if(a)
@@ -25,12 +31,13 @@ const char* sdefault(const char* a,const char* d){
 }
 
 int main(){
+	sigignore( SIGCHLD );
 	int _socket_fd=socket(AF_INET, SOCK_STREAM|SOCK_NONBLOCK|SOCK_CLOEXEC, 0);
 	if(_socket_fd<0){
 		perror("socket");
 		return -1;
 	}
-	struct sockaddr_in _address = {AF_INET,8011,{htonl(INADDR_LOOPBACK)},0};
+	struct sockaddr_in _address = {AF_INET,htons(PORT),{htonl(INADDR_ANY)},{}};
 	if(bind(_socket_fd,(struct sockaddr*)&_address,INET_ADDRSTRLEN)==-1){
 		perror("bind");
 		return -1;
@@ -56,12 +63,20 @@ int main(){
 						close(socket_fd2);
 						continue;
 					} else if(fork_ret==0){
-						char buf1[20];
-						snprintf(buf1, 20, "%d",last_fd);
-						char buf2[20];
-						snprintf(buf2, 20, "%d",socket_fd2);
+						char buf1[INT_DEC_WIDTH];
+						if((unsigned int)snprintf(buf1, INT_DEC_WIDTH, "%d",last_fd)>(unsigned int)INT_DEC_WIDTH){
+							close(last_fd);
+							close(socket_fd2);
+							return -1;
+						}
+						char buf2[INT_DEC_WIDTH];
+						if((unsigned int)snprintf(buf2, INT_DEC_WIDTH, "%d",socket_fd2)>(unsigned int)INT_DEC_WIDTH){
+							close(last_fd);
+							close(socket_fd2);
+							return -1;
+						}
 						char *const a[4]={"schnapsen_fds",buf1,buf2,NULL};
-						execv(sdefault(getenv("SCHNAPSEN_FDS_EXE"), "../schnapsen_fds"), a);
+						execvp(sdefault(getenv("SCHNAPSEN_FDS_EXE"), "schnapsen_fds"), a);
 						perror("execv");
 						kill(getppid(), SIGTERM);
 						return -1;

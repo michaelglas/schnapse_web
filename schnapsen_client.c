@@ -14,14 +14,17 @@
 #include<stdio.h>
 #include<poll.h>
 
-#define READ_SIZE 64
+#ifndef PORT
+#define PORT 8011
+#endif
 
+#define READ_SIZE 64
 
 int pass(int fd1,int fd2){
 	char buf[READ_SIZE];
-	size_t length;
+	ssize_t readv;
 	do {
-		ssize_t readv = read(fd1, buf, READ_SIZE);
+		readv = read(fd1, buf, READ_SIZE);
 		if(readv<0){
 			if(errno&EINTR){
 				continue;
@@ -29,8 +32,7 @@ int pass(int fd1,int fd2){
 				return -1;
 			}
 		}
-		length=(size_t)readv;
-		size_t remaining=length;
+		size_t remaining=(size_t)readv;
 		do {
 			ssize_t written = write(fd2, buf, remaining);
 			if(written<0){
@@ -42,7 +44,7 @@ int pass(int fd1,int fd2){
 			}
 			remaining -= (size_t)written;
 		} while(remaining);
-	} while(length);
+	} while(readv);
 	return 0;
 }
 
@@ -56,12 +58,13 @@ int main(){
 	int fds1[2];
 	int fds2[2];
 	{
-		struct in_addr schnapsen_server;
-		if(!inet_aton(getenv("SCHNAPSEN_SERVER_IP"), &schnapsen_server)){
+		struct in_addr server_address;
+		if(inet_pton(AF_INET,getenv("SCHNAPSEN_SERVER_ADDRESS"), &server_address)<1){
+			perror("inet_pton");
 			return -1;
 		}
 		int socket_fd=socket(AF_INET,SOCK_STREAM,0);
-		struct sockaddr_in address = {AF_INET,8011,schnapsen_server,{0}};
+		struct sockaddr_in address = {AF_INET,htons(PORT),server_address,{}};
 		if(connect(socket_fd,(struct sockaddr*)&address,INET_ADDRSTRLEN)){
 			perror("connect");
 			return -1;

@@ -28,9 +28,9 @@ $(BUILD_CONFIG)/schnapsen_client: schnapsen_client.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C Compiler'
 ifeq ($(BUILD_CONFIG), Debug)
-	gcc -Og -g -Wall -Wextra -fmessage-length=0 -pthread -MMD -MP -MF"$(@).d" -MT"$(@)" -o "$@" "$<"
+	gcc $(if $(PORT),-DPORT=$(PORT),) -Og -g -Wall -Wextra -fmessage-length=0 -pthread -MMD -MP -MF"$(@).d" -MT"$(@)" -o "$@" "$<"
 else ifeq ($(BUILD_CONFIG), Release)
-	gcc -O3 -Wall -Wextra -fmessage-length=0 -pthread -MMD -MP -MF"$(@).d" -MT"$(@)" -o "$@" "$<"
+	gcc $(if $(PORT),-DPORT=$(PORT),) -O3 -Wall -Wextra -fmessage-length=0 -pthread -MMD -MP -MF"$(@).d" -MT"$(@)" -o "$@" "$<"
 else
 	$(error invalid build config $(BUILD_CONFIG))
 endif
@@ -41,9 +41,9 @@ $(BUILD_CONFIG)/schnapsen_server: schnapsen_server.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C Compiler'
 ifeq ($(BUILD_CONFIG), Debug)
-	gcc -Og -g -Wall -Wextra -fmessage-length=0 -MMD -MP -MF"$(@).d" -MT"$(@)" -o "$@" "$<"
+	gcc $(if $(PORT),-DPORT=$(PORT),) -Og -g -Wall -Wextra -fmessage-length=0 -MMD -MP -MF"$(@).d" -MT"$(@)" -o "$@" "$<"
 else ifeq ($(BUILD_CONFIG), Release)
-	gcc -O3 -Wall -Wextra -fmessage-length=0 -MMD -MP -MF"$(@).d" -MT"$(@)" -o "$@" "$<"
+	gcc $(if $(PORT),-DPORT=$(PORT),) -O3 -Wall -Wextra -fmessage-length=0 -MMD -MP -MF"$(@).d" -MT"$(@)" -o "$@" "$<"
 else
 	$(error invalid build config $(BUILD_CONFIG))
 endif

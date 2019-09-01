@@ -15,18 +15,18 @@
 #include<limits.h>
 #include<stddef.h>
 #include<unistd.h>
+#include<stdint.h>
+#include<fcntl.h>
 
-#define SIZE_MAX __SIZE_MAX__
-
-size_t getrandbits(size_t k,FILE* random_stream){
+size_t getrandbits(size_t k,int random_stream){
 	assert(k<=sizeof(size_t)*CHAR_BIT);
 	size_t numbytes = (k + 7) / CHAR_BIT;
 	size_t ret;
-	fread(&ret,numbytes,1,random_stream);
+	read(random_stream, &ret, numbytes);
 	return ret >> (numbytes * CHAR_BIT - k);
 }
 
-size_t randbelow_incl(size_t n,FILE* random_stream){
+size_t randbelow_incl(size_t n,int random_stream){
 	assert(n<=SIZE_MAX);
 	size_t k = 0;
 	for(size_t nc=n;nc;nc=nc>>1){++k;};
@@ -73,7 +73,7 @@ struct card{
 #define trumpf stack[0]
 
 #define PRINT_PROMPT PRINT_PLAYER(abs_player,"player %lu",abs_player+1);\
-	PRINT_PLAYER(abs_player,"hand ");\
+	PRINT_PLAYER(abs_player,";hand ");\
 	PRINT_PLAYER(abs_player,"%c%c",colors[hand[abs_player][0].color],cards[hand[abs_player][0].card]);\
 	for(unsigned int k=1;k<hand_length;++k){\
 		PRINT_PLAYER(abs_player,"|%c%c",colors[hand[abs_player][k].color],cards[hand[abs_player][k].card]);\
@@ -88,7 +88,7 @@ struct card{
 	PRINT_PLAYER(abs_player,"> ");\
 	fflush(streams[abs_player])
 
-void shuffle_cards(struct card* restrict x,size_t length,FILE* restrict random_stream){
+void shuffle_cards(struct card* restrict x,size_t length,int random_stream){
 	for(size_t i=length-1;i>1;--i){
 		size_t j = randbelow_incl(i,random_stream);
 		struct card temp = x[i];
@@ -119,9 +119,9 @@ int main(int argc, char **argv) {
 		}
 	}
 	{
-		FILE* urandom = fopen("/dev/urandom","r"); // open linux system random generator
+		int urandom = open("/dev/urandom",O_RDONLY); // open linux system random generator
 		shuffle_cards(stack,4*5,urandom); // shuffle stack
-		fclose(urandom);
+		close(urandom);
 	}
 	struct card hand[2][5];
 	size_t hand_length = 5;
@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
 		struct card* stich[2];
 		for(size_t rel_player=0;rel_player<2;++rel_player){
 			size_t abs_player = players[rel_player];
-			size_t other_player = !players[rel_player];
+			size_t other_player = !abs_player;
 			struct card* selection;
 			char* string;
 			ssize_t length;
@@ -294,7 +294,7 @@ int main(int argc, char **argv) {
 							case'c':
 								free(string);
 								if(!closed){
-									PRINT_PLAYER(other_player,"player %zu closed",other_player);
+									PRINT_PLAYER(other_player,"player %zu closed",abs_player+1);
 									fflush(streams[abs_player]);
 									closed=1;
 								} else {
@@ -307,7 +307,7 @@ int main(int argc, char **argv) {
 								free(string);
 								for(struct card* i=hand[abs_player];i<hand[abs_player]+hand_length;++i){
 									if(i->card==0&&i->color==trumpf.color){
-										PRINT_PLAYER(other_player,"player %zu swaped %c",other_player,cards[selection->card]);
+										PRINT_PLAYER(other_player,"player %zu swaped %c\n",abs_player+1,cards[i->card]);
 										fflush(streams[abs_player]);
 										struct card temp = trumpf;
 										trumpf = *i;
@@ -370,7 +370,7 @@ int main(int argc, char **argv) {
 				}
 			} while(repeat);
 			if(plus_20_40){
-				PRINT_PLAYER(other_player,"player %zu showed %c",other_player,colors[selection->color]);
+				PRINT_PLAYER(other_player,"player %zu showed %c\n",abs_player+1,colors[selection->color]);
 				fflush(streams[abs_player]);
 				switch(plus_20_40){
 				case 1:
@@ -385,7 +385,7 @@ int main(int argc, char **argv) {
 					goto END_OF_GAME;
 				};
 			}
-			PRINT_PLAYER(other_player,"player %zu played %c%c",other_player,colors[selection->color],cards[selection->card]);
+			PRINT_PLAYER(other_player,"player %zu played %c%c\n",abs_player+1,colors[selection->color],cards[selection->card]);
 			fflush(streams[abs_player]);
 			stich[rel_player]=selection;
 		}
