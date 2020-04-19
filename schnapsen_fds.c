@@ -156,7 +156,6 @@ int main(int argc, char **argv) {
 						perror("getline");
 						return -1;
 					}
-					PRINT_ALL("\n");
 					return 0;
 				}
 				while(length!=2||!(in_n(*string,numbers,hand_length)||(!rel_player&&(special=in(*string,specialchars))))){
@@ -170,7 +169,6 @@ int main(int argc, char **argv) {
 							perror("getline");
 							return -1;
 						}
-						PRINT_ALL("\n");
 						return 0;
 					}
 				}
@@ -223,7 +221,6 @@ int main(int argc, char **argv) {
 										perror("getline");
 										return -1;
 									}
-									PRINT_ALL("\n");
 									return 0;
 								}
 								while(length!=2||!in(*string,"12")){
@@ -238,7 +235,6 @@ int main(int argc, char **argv) {
 											perror("getline");
 											return -1;
 										}
-										PRINT_ALL("\n");
 										return 0;
 									}
 								}
@@ -262,7 +258,6 @@ int main(int argc, char **argv) {
 									perror("getline");
 									return -1;
 								}
-								PRINT_ALL("\n");
 								return 0;
 							}
 							while(length!=2||!in(*string,"12")){
@@ -277,7 +272,6 @@ int main(int argc, char **argv) {
 										perror("getline");
 										return -1;
 									}
-									PRINT_ALL("\n");
 									return 0;
 								}
 							}
